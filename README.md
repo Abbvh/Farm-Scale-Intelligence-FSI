@@ -4,7 +4,7 @@
 
 ## Vision
 FSI is a research-driven AI company building unified intelligence 
-for animals, crops, and farm environments — modeled on DeepMind's 
+for animals, crops, and farm environments.Modeled on DeepMind's 
 dual research + product philosophy.
 
 ## FSI v1.0 — Mastitis Early Detection
@@ -26,7 +26,7 @@ and production data with explainable AI (SHAP).
 | Mastitis Recall | 0.99 | 0.99 |
 
 ### Key finding
-Dataset limitations identified — clinical signs encoded as 
+Dataset limitations identified clinical signs encoded as 
 features inflate performance. Next step: acquire longitudinal 
 pre-clinical sensor dataset for honest early warning modeling.
 
