@@ -42,4 +42,4 @@ pre-clinical sensor dataset for honest early warning modeling.
 Python · scikit-learn · XGBoost · SHAP · pandas · matplotlib
 
 ## Founded by
-A university student with a dream · 2025
+Murtala Kabir· 2025
