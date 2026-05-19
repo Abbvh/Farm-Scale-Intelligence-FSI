@@ -1,0 +1,1240 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FSI Mastitis Early Detection Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2933;
+      --muted: #64717f;
+      --soft: #eef3f6;
+      --line: #d7e0e6;
+      --panel: #ffffff;
+      --panel-2: #f7fafb;
+      --teal: #0f8b8d;
+      --teal-2: #0b6f72;
+      --blue: #315d80;
+      --green: #2f855a;
+      --amber: #c47a00;
+      --red: #ba2d0b;
+      --red-soft: #fff1ed;
+      --amber-soft: #fff8e8;
+      --green-soft: #edf8f1;
+      --shadow: 0 18px 45px rgba(31, 41, 51, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(15, 139, 141, 0.10), rgba(49, 93, 128, 0.05) 44%, rgba(196, 122, 0, 0.08)),
+        #f4f7f8;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      line-height: 1.45;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(1480px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--teal), var(--blue));
+      color: #fff;
+      font-weight: 800;
+      letter-spacing: 0;
+      box-shadow: 0 12px 24px rgba(15, 139, 141, 0.24);
+      flex: 0 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 40px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 14px;
+      max-width: 760px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--muted);
+      padding: 8px 12px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(215, 224, 230, 0.95);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel-header {
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #31424f;
+    }
+
+    .panel-note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .input-panel {
+      position: sticky;
+      top: 18px;
+    }
+
+    .form {
+      padding: 16px 18px 18px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 92px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    label {
+      display: block;
+      color: #34495a;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid #cbd7df;
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      padding: 8px 10px;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(15, 139, 141, 0.14);
+    }
+
+    input[type="range"] {
+      min-height: 38px;
+      padding: 0;
+      accent-color: var(--teal);
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 0 18px 16px;
+    }
+
+    .preset {
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      border-radius: 7px;
+      min-height: 42px;
+      color: #31424f;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .preset:hover,
+    .preset.active {
+      border-color: var(--teal);
+      background: #eaf7f7;
+      color: var(--teal-2);
+    }
+
+    .primary-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 7px;
+      background: var(--teal);
+      color: #fff;
+      min-height: 44px;
+      font-weight: 800;
+      margin-top: 4px;
+      box-shadow: 0 10px 18px rgba(15, 139, 141, 0.22);
+    }
+
+    .primary-btn:hover {
+      background: var(--teal-2);
+    }
+
+    .dashboard {
+      display: grid;
+      gap: 18px;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.88fr) minmax(280px, 1.12fr);
+      gap: 18px;
+    }
+
+    .risk-panel {
+      padding: 18px;
+      min-height: 306px;
+    }
+
+    .cow-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .risk-badge {
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-weight: 800;
+      font-size: 12px;
+      border: 1px solid transparent;
+    }
+
+    .risk-badge.low {
+      background: var(--green-soft);
+      color: var(--green);
+      border-color: #b9e6c6;
+    }
+
+    .risk-badge.elevated {
+      background: var(--amber-soft);
+      color: var(--amber);
+      border-color: #f2d395;
+    }
+
+    .risk-badge.high {
+      background: var(--red-soft);
+      color: var(--red);
+      border-color: #f1b4a6;
+    }
+
+    .score-wrap {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .gauge {
+      --score: 0deg;
+      width: 150px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center, #fff 0 57%, transparent 58%),
+        conic-gradient(var(--risk-color) var(--score), #e5edf1 0);
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+
+    .gauge::after {
+      content: "";
+      position: absolute;
+      inset: 13px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+    }
+
+    .score {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+
+    .score strong {
+      display: block;
+      font-size: 38px;
+      line-height: 1;
+      color: var(--risk-color);
+    }
+
+    .score span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .risk-copy h2 {
+      margin: 0 0 8px;
+      font-size: 27px;
+      letter-spacing: 0;
+    }
+
+    .risk-copy p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .action-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .action {
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      gap: 9px;
+      align-items: start;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 10px;
+      font-size: 13px;
+    }
+
+    .action-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--risk-color);
+      color: #fff;
+      font-weight: 900;
+      font-size: 12px;
+    }
+
+    .explain-panel {
+      overflow: hidden;
+    }
+
+    .explain-body {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 18px;
+      padding: 18px;
+      align-items: stretch;
+    }
+
+    .waterfall-axis {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 240px;
+    }
+
+    .baseline {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .baseline strong {
+      display: block;
+      font-size: 26px;
+      color: var(--ink);
+      line-height: 1.1;
+    }
+
+    .waterfall {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .shap-row {
+      display: grid;
+      grid-template-columns: 150px 1fr 64px;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .feature-name {
+      font-size: 13px;
+      color: #34495a;
+      font-weight: 800;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .bar-track {
+      height: 28px;
+      background:
+        linear-gradient(90deg, transparent calc(50% - 1px), rgba(31, 41, 51, 0.28) calc(50% - 1px), rgba(31, 41, 51, 0.28) calc(50% + 1px), transparent calc(50% + 1px)),
+        #eef3f6;
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bar {
+      position: absolute;
+      top: 4px;
+      height: 20px;
+      border-radius: 5px;
+      min-width: 2px;
+      transition: width 280ms ease, left 280ms ease;
+    }
+
+    .bar.pos {
+      left: 50%;
+      background: var(--red);
+    }
+
+    .bar.neg {
+      right: 50%;
+      background: var(--teal);
+    }
+
+    .shap-value {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-weight: 900;
+      font-size: 13px;
+    }
+
+    .shap-value.pos {
+      color: var(--red);
+    }
+
+    .shap-value.neg {
+      color: var(--teal-2);
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    .dot.red {
+      background: var(--red);
+    }
+
+    .dot.teal {
+      background: var(--teal);
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .mini-card {
+      padding: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 8px;
+      min-height: 124px;
+    }
+
+    .mini-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .mini-value {
+      margin-top: 8px;
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--ink);
+    }
+
+    .mini-copy {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .lower-grid {
+      display: grid;
+      grid-template-columns: minmax(330px, 0.88fr) minmax(360px, 1.12fr);
+      gap: 18px;
+    }
+
+    .sensitivity {
+      padding: 18px;
+    }
+
+    .threshold-row {
+      display: grid;
+      grid-template-columns: 1fr 80px;
+      gap: 12px;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    .threshold-card {
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      border-radius: 8px;
+      padding: 13px;
+      color: #34495a;
+      font-size: 13px;
+    }
+
+    .herd-panel {
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+
+    th {
+      color: var(--muted);
+      background: var(--panel-2);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .row-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 6px;
+      padding: 6px 9px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--teal-2);
+    }
+
+    .row-btn:hover {
+      border-color: var(--teal);
+      background: #eaf7f7;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      min-width: 82px;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 11px;
+      font-weight: 900;
+      border: 1px solid transparent;
+    }
+
+    .status-chip.low {
+      background: var(--green-soft);
+      color: var(--green);
+      border-color: #b9e6c6;
+    }
+
+    .status-chip.elevated {
+      background: var(--amber-soft);
+      color: var(--amber);
+      border-color: #f2d395;
+    }
+
+    .status-chip.high {
+      background: var(--red-soft);
+      color: var(--red);
+      border-color: #f1b4a6;
+    }
+
+    .footer-note {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    @media (max-width: 1100px) {
+      .main-grid,
+      .status-grid,
+      .lower-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .input-panel {
+        position: static;
+      }
+
+      .details-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app {
+        width: min(100% - 20px, 1480px);
+        padding-top: 14px;
+      }
+
+      .topbar,
+      .score-wrap,
+      .explain-body {
+        display: block;
+      }
+
+      .top-actions {
+        justify-content: flex-start;
+        margin-top: 12px;
+      }
+
+      .score-wrap .gauge {
+        margin-bottom: 16px;
+      }
+
+      .split,
+      .details-grid,
+      .preset-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .waterfall-axis {
+        min-height: auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .shap-row {
+        grid-template-columns: 1fr;
+        gap: 5px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .shap-value {
+        text-align: left;
+      }
+
+      th:nth-child(3),
+      td:nth-child(3) {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">FSI</div>
+        <div>
+          <h1>Farm Scale Intelligence</h1>
+          <div class="subtitle">Interpretable mastitis early warning dashboard using model probability, SHAP-style feature attribution, and farm-ready next actions.</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="pill">Layer 1: mastitis triage</div>
+        <div class="pill">Demo model output</div>
+      </div>
+    </header>
+
+    <section class="main-grid">
+      <aside class="panel input-panel" aria-label="Cow sensor input">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Cow Sensor Input</h2>
+            <div class="panel-note">Adjust values or load a sample case.</div>
+          </div>
+        </div>
+
+        <div class="form">
+          <div class="split">
+            <div class="field">
+              <label for="cowid">Cow ID</label>
+              <input id="cowid" value="COW-047" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="breed">Breed</label>
+              <select id="breed">
+                <option value="0">Jersey</option>
+                <option value="1">Holstein</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="temp">Temperature, deg C</label>
+            <div class="field-row">
+              <input type="range" id="temp" min="32" max="43.5" value="40.8" step="0.1">
+              <input type="number" id="tempNum" min="32" max="43.5" value="40.8" step="0.1">
+            </div>
+            <div class="hint">Healthy adult dairy cows often sit near 38.5 to 39.5 deg C.</div>
+          </div>
+
+          <div class="split">
+            <div class="field">
+              <label for="months">Months after calving</label>
+              <input type="number" id="months" value="2" min="1" max="12" step="1">
+            </div>
+            <div class="field">
+              <label for="prev">Previous mastitis</label>
+              <select id="prev">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="split">
+            <div class="field">
+              <label for="iufl">IUFL</label>
+              <input type="number" id="iufl" value="230" min="100" max="400" step="1">
+            </div>
+            <div class="field">
+              <label for="eufl">EUFL</label>
+              <input type="number" id="eufl" value="265" min="100" max="400" step="1">
+            </div>
+          </div>
+
+          <div class="split">
+            <div class="field">
+              <label for="iufr">IUFR</label>
+              <input type="number" id="iufr" value="228" min="100" max="400" step="1">
+            </div>
+            <div class="field">
+              <label for="eufr">EUFR</label>
+              <input type="number" id="eufr" value="270" min="100" max="400" step="1">
+            </div>
+          </div>
+
+          <div class="split">
+            <div class="field">
+              <label for="iurl">IURL</label>
+              <input type="number" id="iurl" value="225" min="100" max="400" step="1">
+            </div>
+            <div class="field">
+              <label for="eurl">EURL</label>
+              <input type="number" id="eurl" value="310" min="100" max="400" step="1">
+            </div>
+          </div>
+
+          <div class="split">
+            <div class="field">
+              <label for="iurr">IURR</label>
+              <input type="number" id="iurr" value="222" min="100" max="400" step="1">
+            </div>
+            <div class="field">
+              <label for="eurr">EURR</label>
+              <input type="number" id="eurr" value="260" min="100" max="400" step="1">
+            </div>
+          </div>
+
+          <button class="primary-btn" id="predictBtn" type="button">Update Prediction</button>
+        </div>
+
+        <div class="preset-grid" aria-label="Sample cases">
+          <button class="preset" type="button" data-preset="healthy">Healthy</button>
+          <button class="preset active" type="button" data-preset="watch">Watch</button>
+          <button class="preset" type="button" data-preset="urgent">Urgent</button>
+        </div>
+      </aside>
+
+      <section class="dashboard" aria-live="polite">
+        <div class="status-grid">
+          <article class="panel risk-panel" id="riskPanel">
+            <div class="cow-line">
+              <span id="cowLabel">COW-047</span>
+              <span class="risk-badge elevated" id="riskBadge">Elevated risk</span>
+            </div>
+            <div class="score-wrap">
+              <div class="gauge" id="gauge" style="--score: 0deg; --risk-color: var(--amber);">
+                <div class="score">
+                  <strong id="probability">0%</strong>
+                  <span>risk score</span>
+                </div>
+              </div>
+              <div class="risk-copy">
+                <h2 id="riskTitle">Awaiting prediction</h2>
+                <p id="riskText">The dashboard updates as sensor values change.</p>
+              </div>
+            </div>
+            <div class="action-list" id="actionList"></div>
+          </article>
+
+          <article class="panel explain-panel">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">SHAP Explanation</h2>
+                <div class="panel-note">Positive values push the model toward mastitis risk. Negative values reduce risk.</div>
+              </div>
+            </div>
+            <div class="explain-body">
+              <div class="waterfall-axis">
+                <div class="baseline">Base risk<strong id="baseRisk">24%</strong></div>
+                <div class="baseline">Model output<strong id="outputRisk">0%</strong></div>
+              </div>
+              <div>
+                <div class="waterfall" id="shapRows"></div>
+                <div class="legend">
+                  <span><i class="dot red"></i>Increases risk</span>
+                  <span><i class="dot teal"></i>Reduces risk</span>
+                  <span>Centered on zero contribution</span>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="details-grid" id="detailCards"></div>
+
+        <div class="lower-grid">
+          <article class="panel sensitivity">
+            <h2 class="panel-title">Decision Threshold</h2>
+            <div class="panel-note">Change the alert threshold to see how this case would be classified operationally.</div>
+            <div class="threshold-row">
+              <input type="range" id="threshold" min="20" max="80" value="45" step="1">
+              <input type="number" id="thresholdNum" min="20" max="80" value="45" step="1">
+            </div>
+            <div class="threshold-card" id="thresholdText"></div>
+          </article>
+
+          <article class="panel herd-panel">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">Herd Queue</h2>
+                <div class="panel-note">Example animals a farm manager could review next.</div>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Cow</th>
+                  <th>Risk</th>
+                  <th>Top driver</th>
+                  <th>Load</th>
+                </tr>
+              </thead>
+              <tbody id="herdRows"></tbody>
+            </table>
+          </article>
+        </div>
+
+        <div class="footer-note">Prototype only. Replace the demo scoring and SHAP approximation with your trained model outputs before field use.</div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const fields = ["temp", "months", "breed", "iufl", "eufl", "iufr", "eufr", "iurl", "eurl", "iurr", "eurr", "prev", "cowid"];
+    const baseRisk = 0.24;
+
+    const presets = {
+      healthy: {
+        cowid: "COW-112", breed: 0, temp: 38.7, months: 7, prev: 0,
+        iufl: 182, eufl: 190, iufr: 178, eufr: 188, iurl: 176, eurl: 192, iurr: 181, eurr: 185
+      },
+      watch: {
+        cowid: "COW-047", breed: 1, temp: 40.8, months: 2, prev: 0,
+        iufl: 230, eufl: 265, iufr: 228, eufr: 270, iurl: 225, eurl: 310, iurr: 222, eurr: 260
+      },
+      urgent: {
+        cowid: "COW-019", breed: 1, temp: 42.4, months: 1, prev: 1,
+        iufl: 268, eufl: 332, iufr: 250, eufr: 325, iurl: 260, eurl: 365, iurr: 244, eurr: 318
+      }
+    };
+
+    const herd = [
+      presets.urgent,
+      presets.watch,
+      presets.healthy,
+      {
+        cowid: "COW-083", breed: 0, temp: 39.6, months: 4, prev: 0,
+        iufl: 210, eufl: 224, iufr: 204, eufr: 232, iurl: 202, eurl: 240, iurr: 199, eurr: 226
+      },
+      {
+        cowid: "COW-156", breed: 1, temp: 41.2, months: 3, prev: 1,
+        iufl: 238, eufl: 276, iufr: 230, eufr: 268, iurl: 235, eurl: 288, iurr: 228, eurr: 272
+      }
+    ];
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function numeric(id) {
+      return parseFloat($(id).value) || 0;
+    }
+
+    function readInput() {
+      return {
+        cowid: $("cowid").value.trim() || "COW-001",
+        breed: parseInt($("breed").value, 10) || 0,
+        temp: numeric("temp"),
+        months: numeric("months"),
+        prev: parseInt($("prev").value, 10) || 0,
+        iufl: numeric("iufl"),
+        eufl: numeric("eufl"),
+        iufr: numeric("iufr"),
+        eufr: numeric("eufr"),
+        iurl: numeric("iurl"),
+        eurl: numeric("eurl"),
+        iurr: numeric("iurr"),
+        eurr: numeric("eurr")
+      };
+    }
+
+    function setInput(data) {
+      Object.entries(data).forEach(([key, value]) => {
+        if ($(key)) {
+          $(key).value = value;
+        }
+      });
+      $("tempNum").value = data.temp;
+      updateActivePreset(data);
+      predict();
+    }
+
+    function scoreCase(data) {
+      const quarterMean = (data.iufl + data.eufl + data.iufr + data.eufr + data.iurl + data.eurl + data.iurr + data.eurr) / 8;
+      const rearExternalMean = (data.eurl + data.eurr) / 2;
+      const leftRightGap = Math.abs((data.iufl + data.eufl + data.iurl + data.eurl) - (data.iufr + data.eufr + data.iurr + data.eurr)) / 4;
+      const externalInternalGap = ((data.eufl + data.eufr + data.eurl + data.eurr) - (data.iufl + data.iufr + data.iurl + data.iurr)) / 4;
+
+      const tempScore = clamp((data.temp - 38.5) / 3.8, -0.25, 1.25);
+      const rearScore = clamp((rearExternalMean - 185) / 170, -0.25, 1.2);
+      const quarterScore = clamp((quarterMean - 190) / 155, -0.25, 1.1);
+      const asymmetryScore = clamp((leftRightGap - 10) / 80, -0.2, 1);
+      const gapScore = clamp((externalInternalGap - 18) / 95, -0.25, 1);
+      const calvingScore = data.months <= 2 ? 0.72 : data.months <= 4 ? 0.38 : data.months <= 6 ? 0.1 : -0.2;
+      const historyScore = data.prev ? 0.65 : -0.08;
+      const breedScore = data.breed ? 0.08 : -0.02;
+
+      const shap = [
+        { name: "Temperature", value: 0.23 * tempScore, raw: `${data.temp.toFixed(1)} deg C`, note: "Fever-like values tend to dominate early mastitis alerts." },
+        { name: "Rear external udder", value: 0.16 * rearScore, raw: `${rearExternalMean.toFixed(0)} avg`, note: "Higher rear external readings are treated as inflammation evidence." },
+        { name: "Quarter mean", value: 0.12 * quarterScore, raw: `${quarterMean.toFixed(0)} avg`, note: "Overall elevation across quarters lifts the baseline probability." },
+        { name: "Quarter asymmetry", value: 0.10 * asymmetryScore, raw: `${leftRightGap.toFixed(0)} gap`, note: "Uneven quarter behavior can be more informative than a single raw value." },
+        { name: "External/internal gap", value: 0.08 * gapScore, raw: `${externalInternalGap.toFixed(0)} gap`, note: "External readings rising above internal readings adds weak positive evidence." },
+        { name: "Months after calving", value: 0.07 * calvingScore, raw: `${data.months} month(s)`, note: "Early lactation is treated as a higher vigilance period." },
+        { name: "Previous mastitis", value: 0.06 * historyScore, raw: data.prev ? "Yes" : "No", note: "Clinical history nudges the alert threshold." },
+        { name: "Breed", value: 0.02 * breedScore, raw: data.breed ? "Holstein" : "Jersey", note: "Small demo coefficient; replace with your fitted feature effect." }
+      ];
+
+      const logit = -1.15 + shap.reduce((sum, item) => sum + item.value * 5.1, 0);
+      const probability = clamp(1 / (1 + Math.exp(-logit)), 0.01, 0.98);
+      return { probability, shap, metrics: { quarterMean, rearExternalMean, leftRightGap, externalInternalGap } };
+    }
+
+    function classify(probability) {
+      if (probability >= 0.70) {
+        return {
+          key: "high",
+          label: "High risk",
+          color: "var(--red)",
+          title: "Immediate follow-up recommended",
+          text: "The model sees multiple converging signals that look compatible with mastitis risk.",
+          actions: ["Run CMT or SCC confirmation within 12 hours.", "Flag for veterinary review if confirmed.", "Reduce pen mixing until the case is checked."]
+        };
+      }
+      if (probability >= 0.35) {
+        return {
+          key: "elevated",
+          label: "Elevated risk",
+          color: "var(--amber)",
+          title: "Watch closely before the next milking",
+          text: "The model is not certain, but the current sensor pattern deserves a focused check.",
+          actions: ["Repeat sensor capture and compare trend.", "Inspect udder quarter with largest contribution.", "Schedule CMT if the score rises or symptoms appear."]
+        };
+      }
+      return {
+        key: "low",
+        label: "Low risk",
+        color: "var(--green)",
+        title: "Routine monitoring",
+        text: "The current readings do not strongly resemble the learned mastitis pattern.",
+        actions: ["Continue normal observation.", "Re-score if temperature or quarter asymmetry changes.", "Keep this reading in the longitudinal record."]
+      };
+    }
+
+    function formatSigned(value) {
+      const rounded = value.toFixed(3);
+      return value >= 0 ? `+${rounded}` : rounded;
+    }
+
+    function renderRisk(data, result) {
+      const pct = Math.round(result.probability * 100);
+      const risk = classify(result.probability);
+      $("cowLabel").textContent = data.cowid;
+      $("riskBadge").className = `risk-badge ${risk.key}`;
+      $("riskBadge").textContent = risk.label;
+      $("gauge").style.setProperty("--score", `${pct * 3.6}deg`);
+      $("gauge").style.setProperty("--risk-color", risk.color);
+      $("probability").textContent = `${pct}%`;
+      $("riskTitle").textContent = risk.title;
+      $("riskText").textContent = risk.text;
+      $("outputRisk").textContent = `${pct}%`;
+      $("actionList").innerHTML = risk.actions.map((action, index) => `
+        <div class="action">
+          <span class="action-num">${index + 1}</span>
+          <span>${action}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderShap(result) {
+      const sorted = [...result.shap].sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+      const maxAbs = Math.max(...sorted.map((item) => Math.abs(item.value)), 0.01);
+      $("baseRisk").textContent = `${Math.round(baseRisk * 100)}%`;
+      $("shapRows").innerHTML = sorted.map((item) => {
+        const width = clamp((Math.abs(item.value) / maxAbs) * 48, 2, 48);
+        const signClass = item.value >= 0 ? "pos" : "neg";
+        return `
+          <div class="shap-row" title="${item.note}">
+            <div class="feature-name">${item.name}</div>
+            <div class="bar-track">
+              <div class="bar ${signClass}" style="width:${width}%"></div>
+            </div>
+            <div class="shap-value ${signClass}">${formatSigned(item.value)}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderDetails(data, result) {
+      const topDriver = [...result.shap].sort((a, b) => Math.abs(b.value) - Math.abs(a.value))[0];
+      const cards = [
+        ["Top driver", topDriver.name, `${topDriver.raw}. ${topDriver.note}`],
+        ["Most affected signal", `EURL ${data.eurl}`, "Use this as the first quarter to inspect in the example workflow."],
+        ["Quarter mean", result.metrics.quarterMean.toFixed(0), "Average across all eight udder sensor readings."],
+        ["Asymmetry", result.metrics.leftRightGap.toFixed(0), "Approximate left-right signal separation."],
+        ["History factor", data.prev ? "Present" : "Absent", data.prev ? "Previous mastitis increases concern." : "No prior case slightly reduces concern."],
+        ["Interpretability state", "Ready", "SHAP values are shown as local contributions for this one cow."]
+      ];
+      $("detailCards").innerHTML = cards.map(([label, value, copy]) => `
+        <article class="mini-card">
+          <div class="mini-label">${label}</div>
+          <div class="mini-value">${value}</div>
+          <div class="mini-copy">${copy}</div>
+        </article>
+      `).join("");
+    }
+
+    function renderThreshold(result) {
+      const threshold = parseInt($("threshold").value, 10);
+      const pct = Math.round(result.probability * 100);
+      const alert = pct >= threshold;
+      $("thresholdNum").value = threshold;
+      $("thresholdText").innerHTML = `
+        With a ${threshold}% farm alert threshold, this case would be
+        <strong>${alert ? "sent to the attention queue" : "kept in routine monitoring"}</strong>.
+        Current score: <strong>${pct}%</strong>.
+      `;
+    }
+
+    function renderHerd() {
+      const rows = herd
+        .map((cow) => ({ cow, result: scoreCase(cow) }))
+        .sort((a, b) => b.result.probability - a.result.probability)
+        .map(({ cow, result }) => {
+          const pct = Math.round(result.probability * 100);
+          const risk = classify(result.probability);
+          const top = [...result.shap].sort((a, b) => Math.abs(b.value) - Math.abs(a.value))[0];
+          return `
+            <tr>
+              <td><strong>${cow.cowid}</strong></td>
+              <td><span class="status-chip ${risk.key}">${pct}% ${risk.label.split(" ")[0]}</span></td>
+              <td>${top.name}</td>
+              <td><button class="row-btn" type="button" data-cow="${cow.cowid}">Load</button></td>
+            </tr>
+          `;
+        }).join("");
+      $("herdRows").innerHTML = rows;
+    }
+
+    function predict() {
+      const data = readInput();
+      const result = scoreCase(data);
+      $("tempNum").value = data.temp.toFixed(1);
+      renderRisk(data, result);
+      renderShap(result);
+      renderDetails(data, result);
+      renderThreshold(result);
+      updateActivePreset(data);
+    }
+
+    function updateActivePreset(data) {
+      document.querySelectorAll(".preset").forEach((button) => {
+        const preset = presets[button.dataset.preset];
+        const same = preset && preset.cowid === data.cowid;
+        button.classList.toggle("active", same);
+      });
+    }
+
+    $("temp").addEventListener("input", () => {
+      $("tempNum").value = $("temp").value;
+      predict();
+    });
+
+    $("tempNum").addEventListener("input", () => {
+      $("temp").value = $("tempNum").value;
+      predict();
+    });
+
+    $("threshold").addEventListener("input", () => renderThreshold(scoreCase(readInput())));
+    $("thresholdNum").addEventListener("input", () => {
+      $("threshold").value = $("thresholdNum").value;
+      renderThreshold(scoreCase(readInput()));
+    });
+
+    fields.forEach((id) => {
+      if (id !== "temp") {
+        $(id).addEventListener("input", predict);
+        $(id).addEventListener("change", predict);
+      }
+    });
+
+    $("predictBtn").addEventListener("click", predict);
+
+    document.querySelectorAll(".preset").forEach((button) => {
+      button.addEventListener("click", () => setInput(presets[button.dataset.preset]));
+    });
+
+    $("herdRows").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-cow]");
+      if (!button) return;
+      const cow = herd.find((item) => item.cowid === button.dataset.cow);
+      if (cow) setInput(cow);
+    });
+
+    renderHerd();
+    setInput(presets.watch);
+  </script>
+</body>
+</html>
