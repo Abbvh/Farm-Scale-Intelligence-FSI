@@ -1,0 +1,42 @@
+{
+  "model": "XGBoost",
+  "dataset": "FSI Synthetic SCC Dataset v1",
+  "n_records": 10000,
+  "n_features": 13,
+  "balanced_accuracy": 0.9966,
+  "auc_roc": 1.0,
+  "mastitis_recall": 0.99,
+  "mastitis_precision": 0.99,
+  "class_distribution": {
+    "healthy": 8000,
+    "mastitis": 2000
+  },
+  "features_used": [
+    "parity",
+    "days_in_milk",
+    "breed",
+    "milk_yield_kg",
+    "electrical_conductivity",
+    "activity_steps",
+    "rumination_time",
+    "body_temp",
+    "milk_fat_pct",
+    "milk_protein_pct",
+    "yield_deviation",
+    "early_lactation",
+    "stress_score"
+  ],
+  "features_excluded": [
+    "scc",
+    "log_scc"
+  ],
+  "exclusion_reason": "SCC not available in real-time \u2014 requires lab testing",
+  "key_finding": "Mastitis predictable from continuous real-time signals without SCC",
+  "top_predictors": [
+    "electrical_conductivity",
+    "stress_score",
+    "body_temp",
+    "rumination_time",
+    "milk_yield_kg"
+  ]
+}
