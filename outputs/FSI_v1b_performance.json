@@ -1,0 +1,28 @@
+{
+  "model": "XGBoost",
+  "module": "FSI v1.0b \u2014 Pre-Calving Risk Prediction",
+  "dataset": "Synthetic Thompson 2023 Post-Calving SCC",
+  "n_records": 10000,
+  "n_features": 30,
+  "balanced_accuracy": 0.6656,
+  "balanced_accuracy_std": 0.012,
+  "auc_roc": 0.7274,
+  "auc_roc_std": 0.0088,
+  "f1_score": 0.4253,
+  "f1_std": 0.0166,
+  "top_predictors": [
+    "pct_scc_gt_100k_prev_lactation",
+    "dry_off_imi_status_paper_rule",
+    "last_scc_prev_lactation_cells_ml",
+    "parity_prior_lactation",
+    "pct_scc_gt_200k_prev_lactation"
+  ],
+  "key_findings": [
+    "Chronic subclinical SCC elevation more predictive than peak values",
+    "Dry-off IMI status is strongest binary predictor",
+    "Older cows consistently higher risk",
+    "Herd IMI rate shows counterintuitive protective effect",
+    "Pre-calving prediction achievable at 72.7% AUC-ROC"
+  ],
+  "prediction_horizon": "60-90 days before calving"
+}
