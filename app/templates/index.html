@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FSI v1.0 — Farm Scale Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal:#0A9396; --teal-dark:#005F73; --teal-light:#94D2BD;
+  --amber:#EE9B00; --coral:#AE2012; --green:#2DC653;
+  --navy:#001219; --bg:#030E12; --surface:#071820;
+  --surface2:#0C2330; --border:rgba(10,147,150,0.2);
+  --text:#E9F5F5; --text2:#94D2BD; --text3:#4A7F80;
+  --font:'Space Grotesk',sans-serif; --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(10,147,150,0.04) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(10,147,150,0.04) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0}
+
+.header{position:sticky;top:0;z-index:100;background:rgba(3,14,18,0.95);
+  backdrop-filter:blur(20px);border-bottom:1px solid var(--border);
+  padding:0 28px;display:flex;align-items:center;gap:16px;height:64px}
+.logo-mark{width:38px;height:38px;background:linear-gradient(135deg,var(--teal-dark),var(--teal));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:18px;box-shadow:0 0 20px rgba(10,147,150,0.3)}
+.logo-title{font-size:16px;font-weight:600}
+.logo-title span{color:var(--teal)}
+.logo-sub{font-size:11px;color:var(--text3)}
+.header-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.pill{font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;border:1px solid}
+.pill-teal{border-color:var(--teal);color:var(--teal);background:rgba(10,147,150,0.1)}
+.pill-green{border-color:var(--green);color:var(--green);background:rgba(45,198,83,0.1)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 8px var(--green);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(1.4)}}
+
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);
+  background:var(--surface);position:sticky;top:64px;z-index:99}
+.tab{padding:14px 28px;font-size:13px;font-weight:500;cursor:pointer;
+  border-bottom:2px solid transparent;color:var(--text3);transition:all 0.2s}
+.tab.active{color:var(--teal);border-bottom-color:var(--teal)}
+.tab:hover:not(.active){color:var(--text2)}
+
+.page{display:none;position:relative;z-index:1}
+.page.active{display:block}
+
+.layout{display:grid;grid-template-columns:360px 1fr;min-height:calc(100vh - 110px)}
+.left-panel{background:var(--surface);border-right:1px solid var(--border);
+  padding:24px;overflow-y:auto;max-height:calc(100vh - 110px)}
+.right-panel{padding:24px;display:flex;flex-direction:column;gap:16px;
+  overflow-y:auto;max-height:calc(100vh - 110px)}
+
+.section-label{font-size:10px;font-weight:600;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--text3);margin-bottom:14px;
+  display:flex;align-items:center;gap:10px}
+.section-label::after{content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,var(--border),transparent)}
+
+.input-group{margin-bottom:14px}
+.input-group label{font-size:11px;color:var(--text3);display:block;margin-bottom:6px}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+input[type=number],select{
+  width:100%;background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:9px 12px;font-family:var(--mono);
+  font-size:13px;color:var(--text);outline:none;transition:all 0.2s}
+input[type=number]:focus,select:focus{border-color:var(--teal);
+  box-shadow:0 0 0 3px rgba(10,147,150,0.15)}
+select option{background:var(--surface)}
+
+.slider-group{background:var(--surface2);border:1px solid var(--border);
+  border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.slider-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.slider-name{font-size:13px;font-weight:500}
+.slider-badge{font-family:var(--mono);font-size:12px;font-weight:600;
+  color:var(--navy);padding:2px 10px;border-radius:6px;
+  background:var(--teal);min-width:50px;text-align:center}
+input[type=range]{width:100%;height:4px;cursor:pointer;
+  -webkit-appearance:none;background:var(--border);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;
+  width:16px;height:16px;border-radius:50%;background:var(--teal);cursor:pointer}
+.slider-desc{font-size:10px;color:var(--text3);margin-top:4px}
+
+.predict-btn{width:100%;padding:14px;
+  background:linear-gradient(135deg,var(--teal-dark),var(--teal));
+  border:none;border-radius:12px;color:white;font-family:var(--font);
+  font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;
+  box-shadow:0 4px 24px rgba(10,147,150,0.35);transition:all 0.2s}
+.predict-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(10,147,150,0.45)}
+.predict-btn:active{transform:scale(0.98)}
+.predict-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+
+.status-hero{background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:22px 24px;display:flex;align-items:center;
+  gap:20px;transition:all 0.4s}
+.status-orb{width:76px;height:76px;flex-shrink:0;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:30px;
+  border:2px solid;transition:all 0.4s}
+.status-body{flex:1}
+.status-cow{font-family:var(--mono);font-size:12px;color:var(--text3);margin-bottom:4px}
+.status-verdict{font-size:24px;font-weight:700;transition:color 0.4s}
+.status-detail{font-size:13px;color:var(--text2);margin-top:4px}
+.prob-track{width:100%;height:6px;background:rgba(255,255,255,0.06);
+  border-radius:3px;margin-top:12px;overflow:hidden}
+.prob-fill{height:100%;border-radius:3px;transition:width 0.7s ease,background 0.4s}
+.prob-display{text-align:right}
+.prob-number{font-family:var(--mono);font-size:40px;font-weight:600;line-height:1;transition:color 0.4s}
+.prob-label{font-size:10px;color:var(--text3);margin-top:4px;letter-spacing:0.05em}
+
+.metrics-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.metric-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:14px;position:relative;overflow:hidden}
+.metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.metric-card.c1::before{background:linear-gradient(90deg,var(--teal),transparent)}
+.metric-card.c2::before{background:linear-gradient(90deg,var(--amber),transparent)}
+.metric-card.c3::before{background:linear-gradient(90deg,#7B2FBE,transparent)}
+.metric-val{font-size:20px;font-weight:700}
+.metric-lbl{font-size:11px;color:var(--text3);margin-top:4px}
+
+.shap-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:20px;flex:1}
+.shap-row{display:grid;grid-template-columns:140px 1fr 60px;
+  align-items:center;gap:10px;margin-bottom:9px}
+.shap-feat{font-size:11px;color:var(--text2);text-align:right}
+.shap-feat small{display:block;font-size:10px;color:var(--text3);font-family:var(--mono)}
+.shap-track{height:24px;background:rgba(255,255,255,0.04);border-radius:6px;overflow:hidden}
+.shap-fill{height:100%;border-radius:6px;display:flex;align-items:center;
+  padding:0 8px;transition:width 0.6s ease;min-width:36px}
+.shap-fill span{font-family:var(--mono);font-size:11px;font-weight:600;color:rgba(0,0,0,0.85)}
+.shap-impact{font-family:var(--mono);font-size:11px;font-weight:600}
+
+.alert-card{border-radius:14px;padding:16px 18px;border:1px solid;
+  transition:all 0.4s;line-height:1.7;font-size:13px}
+.alert-title{font-size:13px;font-weight:600;margin-bottom:6px}
+
+.loading{display:none;text-align:center;padding:20px;color:var(--text3);font-size:13px}
+.error-msg{background:rgba(174,32,18,0.1);border:1px solid var(--coral);
+  border-radius:8px;padding:12px;color:var(--coral);font-size:13px;margin-top:8px}
+
+.input-field-group{background:var(--surface2);border:1px solid var(--border);
+  border-radius:12px;padding:14px;margin-bottom:10px}
+.field-title{font-size:12px;font-weight:600;color:var(--teal-light);margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo-mark">🌿</div>
+  <div>
+    <div class="logo-title">Farm Scale <span>Intelligence</span></div>
+    <div class="logo-sub">The intelligence layer of biological farming systems</div>
+  </div>
+  <div class="header-right">
+    <span class="pill pill-teal">FSI v1.0</span>
+    <span class="pill pill-green">Local deployment</span>
+    <div class="live-dot"></div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('realtime')">🔴 Real-Time Monitoring</div>
+  <div class="tab" onclick="switchTab('precalving')">📋 Pre-Calving Risk</div>
+</div>
+
+<!-- ── REAL-TIME PAGE ── -->
+<div class="page active" id="page-realtime">
+<div class="layout">
+
+  <div class="left-panel">
+    <div class="section-label">Cow identifier</div>
+    <div class="input-group">
+      <label>Cow ID</label>
+      <input type="text" id="rt-cow-id" placeholder="e.g. cow047, Bessie..."
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);
+        border-radius:8px;padding:9px 12px;font-family:var(--mono);font-size:13px;
+        color:var(--teal);outline:none">
+    </div>
+
+    <div class="section-label">Cow background</div>
+    <div class="input-field-group">
+      <div class="field-title">Animal info</div>
+      <div class="input-row">
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Parity</label>
+          <input type="number" id="rt-parity" value="2" min="1" max="8">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Days in milk</label>
+          <input type="number" id="rt-dim" value="60" min="1" max="400">
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Breed</label>
+        <select id="rt-breed">
+          <option value="0">Holstein</option>
+          <option value="1">Jersey</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-label">Live sensor readings</div>
+
+    <div class="slider-group">
+      <div class="slider-top">
+        <div><div class="slider-name">🌡️ Body temperature</div></div>
+        <div class="slider-badge" id="v-temp">38.7°C</div>
+      </div>
+      <input type="range" min="37.5" max="42" value="38.7" step="0.1" id="s-temp"
+        oninput="document.getElementById('v-temp').textContent=parseFloat(this.value).toFixed(1)+'°C'">
+      <div class="slider-desc">Normal: 38.3 – 39.3°C</div>
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-top">
+        <div><div class="slider-name">🥛 Milk yield</div></div>
+        <div class="slider-badge" id="v-yield">28 kg</div>
+      </div>
+      <input type="range" min="3" max="55" value="28" step="0.5" id="s-yield"
+        oninput="document.getElementById('v-yield').textContent=parseFloat(this.value).toFixed(1)+' kg'">
+      <div class="slider-desc">Average Holstein: 25 – 35 kg/day</div>
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-top">
+        <div><div class="slider-name">⚡ Electrical conductivity</div></div>
+        <div class="slider-badge" id="v-ec">4.8 mS</div>
+      </div>
+      <input type="range" min="3.5" max="9" value="4.8" step="0.1" id="s-ec"
+        oninput="document.getElementById('v-ec').textContent=parseFloat(this.value).toFixed(1)+' mS'">
+      <div class="slider-desc">Normal: 4.0 – 5.5 mS/cm</div>
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-top">
+        <div><div class="slider-name">👟 Activity (steps/day)</div></div>
+        <div class="slider-badge" id="v-activity">3800</div>
+      </div>
+      <input type="range" min="500" max="6000" value="3800" step="50" id="s-activity"
+        oninput="document.getElementById('v-activity').textContent=this.value">
+      <div class="slider-desc">Normal: 3000 – 5000 steps/day</div>
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-top">
+        <div><div class="slider-name">🐄 Rumination time</div></div>
+        <div class="slider-badge" id="v-rum">480 min</div>
+      </div>
+      <input type="range" min="150" max="600" value="480" step="5" id="s-rum"
+        oninput="document.getElementById('v-rum').textContent=this.value+' min'">
+      <div class="slider-desc">Normal: 400 – 550 min/day</div>
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-top">
+        <div><div class="slider-name">🧴 Milk fat %</div></div>
+        <div class="slider-badge" id="v-fat">3.9%</div>
+      </div>
+      <input type="range" min="2" max="6" value="3.9" step="0.1" id="s-fat"
+        oninput="document.getElementById('v-fat').textContent=parseFloat(this.value).toFixed(1)+'%'">
+      <div class="slider-desc">Normal: 3.5 – 4.5%</div>
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-top">
+        <div><div class="slider-name">🧬 Milk protein %</div></div>
+        <div class="slider-badge" id="v-prot">3.2%</div>
+      </div>
+      <input type="range" min="2" max="5" value="3.2" step="0.1" id="s-prot"
+        oninput="document.getElementById('v-prot').textContent=parseFloat(this.value).toFixed(1)+'%'">
+      <div class="slider-desc">Normal: 3.0 – 3.5%</div>
+    </div>
+
+    <button class="predict-btn" onclick="predictRealtime()" id="rt-btn">
+      🔬 Analyse cow health
+    </button>
+    <div id="rt-error" class="error-msg" style="display:none"></div>
+  </div>
+
+  <div class="right-panel">
+    <div class="status-hero" id="rt-status-hero">
+      <div class="status-orb" id="rt-orb" style="background:rgba(10,147,150,0.1);border-color:var(--teal)">⏳</div>
+      <div class="status-body">
+        <div class="status-cow" id="rt-cow-label">AWAITING ANALYSIS</div>
+        <div class="status-verdict" id="rt-verdict" style="color:var(--text3)">Enter data and click analyse</div>
+        <div class="status-detail" id="rt-detail">FSI real-time early warning system</div>
+        <div class="prob-track"><div class="prob-fill" id="rt-prob-fill" style="width:0%;background:var(--teal)"></div></div>
+      </div>
+      <div class="prob-display">
+        <div class="prob-number" id="rt-prob-num" style="color:var(--teal3)">—</div>
+        <div class="prob-label">MASTITIS PROBABILITY</div>
+      </div>
+    </div>
+
+    <div class="metrics-row">
+      <div class="metric-card c1"><div class="metric-val">0.997</div><div class="metric-lbl">Balanced accuracy</div></div>
+      <div class="metric-card c2"><div class="metric-val">1.000</div><div class="metric-lbl">AUC-ROC</div></div>
+      <div class="metric-card c3"><div class="metric-val">13</div><div class="metric-lbl">Features used</div></div>
+    </div>
+
+    <div class="shap-card">
+      <div class="section-label">SHAP explanation — why this prediction?</div>
+      <div id="rt-shap-container">
+        <p style="color:var(--text3);font-size:13px;text-align:center;padding:20px">
+          Run analysis to see feature contributions
+        </p>
+      </div>
+    </div>
+
+    <div class="alert-card" id="rt-alert"
+      style="border-color:var(--border);background:rgba(10,147,150,0.04)">
+      <div class="alert-title">FSI Real-Time Monitor</div>
+      <div id="rt-alert-body">Adjust sensor readings and click "Analyse cow health" to generate a real prediction from FSI's trained XGBoost model with full SHAP explanation.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── PRE-CALVING PAGE ── -->
+<div class="page" id="page-precalving">
+<div class="layout">
+
+  <div class="left-panel">
+    <div class="section-label">Cow identifier</div>
+    <div class="input-group">
+      <label>Cow ID</label>
+      <input type="text" id="pc-cow-id" placeholder="e.g. cow089..."
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);
+        border-radius:8px;padding:9px 12px;font-family:var(--mono);font-size:13px;
+        color:var(--teal);outline:none">
+    </div>
+
+    <div class="section-label">Cow background</div>
+    <div class="input-field-group">
+      <div class="field-title">Animal & lactation info</div>
+      <div class="input-row">
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Parity</label>
+          <input type="number" id="pc-parity" value="2" min="1" max="8">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">SCC records</label>
+          <input type="number" id="pc-scc-records" value="8" min="1" max="15">
+        </div>
+      </div>
+      <div class="input-row" style="margin-top:10px">
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Calving interval (days)</label>
+          <input type="number" id="pc-calving-interval" value="380" min="300" max="600">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Lactation length (days)</label>
+          <input type="number" id="pc-lact-length" value="305" min="200" max="450">
+        </div>
+      </div>
+      <div class="input-row" style="margin-top:10px">
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Dry-off IMI status</label>
+          <select id="pc-imi-status">
+            <option value="0">No infection at dry-off</option>
+            <option value="1">Infected at dry-off</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Dry-off SCC missing</label>
+          <select id="pc-scc-missing">
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Previous lactation SCC history</div>
+    <div class="input-field-group">
+      <div class="field-title">SCC values (cells/mL)</div>
+      <div class="input-row">
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Median SCC</label>
+          <input type="number" id="pc-median-scc" value="80000" min="5000" max="3000000">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Mean SCC</label>
+          <input type="number" id="pc-mean-scc" value="90000" min="5000" max="3000000">
+        </div>
+      </div>
+      <div class="input-row" style="margin-top:10px">
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Last SCC</label>
+          <input type="number" id="pc-last-scc" value="150000" min="5000" max="3000000">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Max SCC</label>
+          <input type="number" id="pc-max-scc" value="350000" min="5000" max="9000000">
+        </div>
+      </div>
+    </div>
+
+    <div class="input-field-group">
+      <div class="field-title">SCC thresholds (%)</div>
+      <div class="input-row">
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">% recordings &gt;100k</label>
+          <input type="number" id="pc-pct-100k" value="25" min="0" max="100">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">% recordings &gt;200k</label>
+          <input type="number" id="pc-pct-200k" value="15" min="0" max="100">
+        </div>
+      </div>
+      <div class="input-row" style="margin-top:10px">
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">% recordings &lt;50k</label>
+          <input type="number" id="pc-pct-lt50k" value="40" min="0" max="100">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Consecutive &gt;200k</label>
+          <input type="number" id="pc-consec" value="0" min="0" max="10">
+        </div>
+      </div>
+    </div>
+
+    <div class="input-field-group">
+      <div class="field-title">Production</div>
+      <div class="input-row">
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Peak yield (kg)</label>
+          <input type="number" id="pc-peak-yield" value="40" min="10" max="70">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Last recording (kg)</label>
+          <input type="number" id="pc-last-yield" value="25" min="5" max="50">
+        </div>
+      </div>
+    </div>
+
+    <button class="predict-btn" onclick="predictPreCalving()" id="pc-btn">
+      📋 Assess pre-calving risk
+    </button>
+    <div id="pc-error" class="error-msg" style="display:none"></div>
+  </div>
+
+  <div class="right-panel">
+    <div class="status-hero" id="pc-status-hero">
+      <div class="status-orb" id="pc-orb" style="background:rgba(10,147,150,0.1);border-color:var(--teal)">⏳</div>
+      <div class="status-body">
+        <div class="status-cow" id="pc-cow-label">AWAITING ANALYSIS</div>
+        <div class="status-verdict" id="pc-verdict" style="color:var(--text3)">Enter cow history and click assess</div>
+        <div class="status-detail" id="pc-detail">FSI pre-calving risk prediction system</div>
+        <div class="prob-track"><div class="prob-fill" id="pc-prob-fill" style="width:0%;background:var(--teal)"></div></div>
+      </div>
+      <div class="prob-display">
+        <div class="prob-number" id="pc-prob-num" style="color:var(--teal3)">—</div>
+        <div class="prob-label">ELEVATED SCC RISK</div>
+      </div>
+    </div>
+
+    <div class="metrics-row">
+      <div class="metric-card c1"><div class="metric-val">0.666</div><div class="metric-lbl">Balanced accuracy</div></div>
+      <div class="metric-card c2"><div class="metric-val">0.727</div><div class="metric-lbl">AUC-ROC</div></div>
+      <div class="metric-card c3"><div class="metric-val">30</div><div class="metric-lbl">Features used</div></div>
+    </div>
+
+    <div class="shap-card">
+      <div class="section-label">SHAP explanation — key risk drivers</div>
+      <div id="pc-shap-container">
+        <p style="color:var(--text3);font-size:13px;text-align:center;padding:20px">
+          Run assessment to see risk drivers
+        </p>
+      </div>
+    </div>
+
+    <div class="alert-card" id="pc-alert"
+      style="border-color:var(--border);background:rgba(10,147,150,0.04)">
+      <div class="alert-title">FSI Pre-Calving Risk Assessor</div>
+      <div id="pc-alert-body">Enter the cow's previous lactation history and click "Assess pre-calving risk" to get FSI's prediction 60-90 days before calving — enabling targeted dry cow therapy decisions.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('page-' + tab).classList.add('active');
+}
+
+function updateStatus(prefix, data) {
+  const prob = data.probability_pct;
+  const risk = data.risk_level;
+  const cowId = document.getElementById(prefix + '-cow-id').value.trim() || 'COW';
+
+  let color, bg, icon, verdict, detail, alertBorder, alertBg, alertText;
+
+  if (risk === 'high') {
+    color = '#AE2012'; bg = 'rgba(174,32,18,0.15)'; icon = '🚨';
+    verdict = 'High risk detected'; detail = 'Immediate action recommended';
+    alertBorder = '#AE2012'; alertBg = 'rgba(174,32,18,0.06)';
+    alertText = `🚨 ${cowId.toUpperCase()} shows HIGH risk (${prob}%). ` +
+      (prefix === 'rt'
+        ? 'Sensor readings indicate active mastitis signals. Recommend CMT test and veterinary consultation within 12 hours.'
+        : 'Previous lactation history indicates high probability of elevated SCC post-calving. Consider targeted dry cow antibiotic therapy.');
+  } else if (risk === 'medium') {
+    color = '#EE9B00'; bg = 'rgba(238,155,0,0.15)'; icon = '⚠️';
+    verdict = 'Medium risk — monitor'; detail = 'Re-evaluate within 24-48 hours';
+    alertBorder = '#EE9B00'; alertBg = 'rgba(238,155,0,0.06)';
+    alertText = `⚠️ ${cowId.toUpperCase()} shows MEDIUM risk (${prob}%). ` +
+      (prefix === 'rt'
+        ? 'Some signals are above baseline. Monitor closely and perform manual examination.'
+        : 'Moderate historical SCC elevation detected. Consider selective dry cow therapy and monitor early post-calving.');
+  } else {
+    color = '#2DC653'; bg = 'rgba(45,198,83,0.15)'; icon = '✅';
+    verdict = 'Low risk — healthy'; detail = 'All signals within normal range';
+    alertBorder = '#0A9396'; alertBg = 'rgba(10,147,150,0.06)';
+    alertText = `✅ ${cowId.toUpperCase()} shows LOW risk (${prob}%). ` +
+      (prefix === 'rt'
+        ? 'All sensor readings are within normal biological range. Continue routine monitoring.'
+        : 'Previous lactation SCC history is within acceptable range. Standard dry cow management recommended.');
+  }
+
+  const hero = document.getElementById(prefix + '-status-hero');
+  hero.style.borderColor = color;
+  hero.style.boxShadow = `0 0 30px ${bg}`;
+
+  const orb = document.getElementById(prefix + '-orb');
+  orb.textContent = icon;
+  orb.style.background = bg;
+  orb.style.borderColor = color;
+
+  document.getElementById(prefix + '-cow-label').textContent = cowId.toUpperCase();
+  const verdict_el = document.getElementById(prefix + '-verdict');
+  verdict_el.textContent = verdict;
+  verdict_el.style.color = color;
+  document.getElementById(prefix + '-detail').textContent = detail;
+  document.getElementById(prefix + '-prob-fill').style.width = prob + '%';
+  document.getElementById(prefix + '-prob-fill').style.background = color;
+  document.getElementById(prefix + '-prob-num').textContent = prob + '%';
+  document.getElementById(prefix + '-prob-num').style.color = color;
+
+  const alert = document.getElementById(prefix + '-alert');
+  alert.style.borderColor = alertBorder;
+  alert.style.borderLeftWidth = '4px';
+  alert.style.borderLeftStyle = 'solid';
+  alert.style.background = alertBg;
+  document.getElementById(prefix + '-alert-body').textContent = alertText;
+}
+
+function renderShap(containerId, shapValues, inputFeatures) {
+  const container = document.getElementById(containerId);
+  const entries = Object.entries(shapValues).slice(0, 8);
+  const maxAbs = Math.max(...entries.map(([,v]) => Math.abs(v)), 0.01);
+
+  container.innerHTML = entries.map(([feat, val]) => {
+    const pct = Math.round((Math.abs(val) / maxAbs) * 85) + 10;
+    const color = val > 0 ? '#AE2012' : '#0A9396';
+    const sign = val > 0 ? '+' : '';
+    const rawVal = inputFeatures ? (inputFeatures[feat] !== undefined ? inputFeatures[feat] : '') : '';
+    const impColor = val > 0 ? '#F4897B' : '#94D2BD';
+    const featName = feat.replace(/_/g,' ').replace('prev lactation','prev.lact.');
+    return `<div class="shap-row">
+      <div class="shap-feat">${featName}<small>${rawVal}</small></div>
+      <div class="shap-track">
+        <div class="shap-fill" style="width:${pct}%;background:${color}">
+          <span>${sign}${val}</span>
+        </div>
+      </div>
+      <div class="shap-impact" style="color:${impColor}">${sign}${val}</div>
+    </div>`;
+  }).join('');
+}
+
+async function predictRealtime() {
+  const btn = document.getElementById('rt-btn');
+  const errDiv = document.getElementById('rt-error');
+  btn.disabled = true; btn.textContent = '⏳ Analysing...';
+  errDiv.style.display = 'none';
+
+  const payload = {
+    parity:                  parseInt(document.getElementById('rt-parity').value),
+    days_in_milk:            parseInt(document.getElementById('rt-dim').value),
+    breed:                   parseInt(document.getElementById('rt-breed').value),
+    milk_yield_kg:           parseFloat(document.getElementById('s-yield').value),
+    electrical_conductivity: parseFloat(document.getElementById('s-ec').value),
+    activity_steps:          parseInt(document.getElementById('s-activity').value),
+    rumination_time:         parseInt(document.getElementById('s-rum').value),
+    body_temp:               parseFloat(document.getElementById('s-temp').value),
+    milk_fat_pct:            parseFloat(document.getElementById('s-fat').value),
+    milk_protein_pct:        parseFloat(document.getElementById('s-prot').value),
+  };
+
+  try {
+    const res = await fetch('/predict_realtime', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    updateStatus('rt', data);
+    renderShap('rt-shap-container', data.shap_values, data.input_features);
+  } catch(e) {
+    errDiv.textContent = 'Error: ' + e.message;
+    errDiv.style.display = 'block';
+  }
+
+  btn.disabled = false; btn.textContent = '🔬 Analyse cow health';
+}
+
+async function predictPreCalving() {
+  const btn = document.getElementById('pc-btn');
+  const errDiv = document.getElementById('pc-error');
+  btn.disabled = true; btn.textContent = '⏳ Assessing...';
+  errDiv.style.display = 'none';
+
+  const payload = {
+    parity:               parseInt(document.getElementById('pc-parity').value),
+    n_scc_records:        parseInt(document.getElementById('pc-scc-records').value),
+    dry_off_imi_status:   parseInt(document.getElementById('pc-imi-status').value),
+    dry_off_scc_missing:  parseInt(document.getElementById('pc-scc-missing').value),
+    calving_interval:     parseInt(document.getElementById('pc-calving-interval').value),
+    lactation_length:     parseInt(document.getElementById('pc-lact-length').value),
+    median_scc:           parseInt(document.getElementById('pc-median-scc').value),
+    mean_scc:             parseInt(document.getElementById('pc-mean-scc').value),
+    last_scc:             parseInt(document.getElementById('pc-last-scc').value),
+    max_scc:              parseInt(document.getElementById('pc-max-scc').value),
+    pct_gt_100k:          parseFloat(document.getElementById('pc-pct-100k').value),
+    pct_gt_200k:          parseFloat(document.getElementById('pc-pct-200k').value),
+    pct_lt_50k:           parseFloat(document.getElementById('pc-pct-lt50k').value),
+    consecutive_high_scc: parseInt(document.getElementById('pc-consec').value),
+    peak_yield:           parseFloat(document.getElementById('pc-peak-yield').value),
+    last_yield:           parseFloat(document.getElementById('pc-last-yield').value),
+  };
+
+  try {
+    const res = await fetch('/predict_precalving', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    updateStatus('pc', data);
+    renderShap('pc-shap-container', data.shap_values, null);
+  } catch(e) {
+    errDiv.textContent = 'Error: ' + e.message;
+    errDiv.style.display = 'block';
+  }
+
+  btn.disabled = false; btn.textContent = '📋 Assess pre-calving risk';
+}
+</script>
+</body>
+</html>
