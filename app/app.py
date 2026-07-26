@@ -9,15 +9,35 @@ import json
 import numpy as np
 import pandas as pd
 import shap
+import os
+import gdown
 
 app = Flask(__name__)
 
+# ── Model download from Google Drive if not present ──
+MODEL_V1_ID  = "1pJjmLeB44luRqOaW3wdYMlhcYHabbwPB"
+MODEL_V1B_ID = "1d3se1uUwnE9-R90QzWqzLx9mPjSnNuA8"
+
+os.makedirs("models", exist_ok=True)
+
+if not os.path.exists("models/FSI_v1_mastitis_model.pkl"):
+    print("Downloading FSI v1.0 model...")
+    gdown.download(
+        f"https://drive.google.com/uc?id={MODEL_V1_ID}",
+        "models/FSI_v1_mastitis_model.pkl", quiet=False)
+
+if not os.path.exists("models/FSI_v1b_precalving_model.pkl"):
+    print("Downloading FSI v1.0b model...")
+    gdown.download(
+        f"https://drive.google.com/uc?id={MODEL_V1B_ID}",
+        "models/FSI_v1b_precalving_model.pkl", quiet=False)
+
 # Load models
 print("Loading FSI models...")
-model_v1 = joblib.load('models/FSI_v1_mastitis_model.pkl')
-model_v1b = joblib.load('models/FSI_v1b_precalving_model.pkl')
+model_v1  = joblib.load("models/FSI_v1_mastitis_model.pkl")
+model_v1b = joblib.load("models/FSI_v1b_precalving_model.pkl")
 
-with open('models/FSI_v1_features.json') as f:
+with open("models/FSI_v1_features.json") as f:
     features_v1 = json.load(f)
 
 # SHAP explainers
@@ -35,21 +55,19 @@ def index():
 def predict_realtime():
     try:
         data = request.json
-        
-        # Build feature vector
         input_data = {
-            'parity':                data.get('parity', 2),
-            'days_in_milk':          data.get('days_in_milk', 60),
-            'breed':                 data.get('breed', 0),
-            'milk_yield_kg':         data.get('milk_yield_kg', 28),
+            'parity':                  data.get('parity', 2),
+            'days_in_milk':            data.get('days_in_milk', 60),
+            'breed':                   data.get('breed', 0),
+            'milk_yield_kg':           data.get('milk_yield_kg', 28),
             'electrical_conductivity': data.get('electrical_conductivity', 4.8),
-            'activity_steps':        data.get('activity_steps', 3800),
-            'rumination_time':       data.get('rumination_time', 480),
-            'body_temp':             data.get('body_temp', 38.7),
-            'milk_fat_pct':          data.get('milk_fat_pct', 3.9),
-            'milk_protein_pct':      data.get('milk_protein_pct', 3.2),
-            'yield_deviation':       data.get('milk_yield_kg', 28) - 28.0,
-            'early_lactation':       1 if data.get('days_in_milk', 60) < 100 else 0,
+            'activity_steps':          data.get('activity_steps', 3800),
+            'rumination_time':         data.get('rumination_time', 480),
+            'body_temp':               data.get('body_temp', 38.7),
+            'milk_fat_pct':            data.get('milk_fat_pct', 3.9),
+            'milk_protein_pct':        data.get('milk_protein_pct', 3.2),
+            'yield_deviation':         data.get('milk_yield_kg', 28) - 28.0,
+            'early_lactation':         1 if data.get('days_in_milk', 60) < 100 else 0,
             'stress_score': (
                 (1 if data.get('activity_steps', 3800) < 2800 else 0) +
                 (1 if data.get('rumination_time', 480) < 400 else 0) +
@@ -58,30 +76,24 @@ def predict_realtime():
         }
 
         df_input = pd.DataFrame([input_data])
-        
-        # Predict
-        prob = float(model_v1.predict_proba(df_input)[0][1])
+        prob     = float(model_v1.predict_proba(df_input)[0][1])
         prediction = int(model_v1.predict(df_input)[0])
-        
-        # SHAP
-        shap_vals = explainer_v1.shap_values(df_input)[0]
-        shap_dict = {
+        shap_vals  = explainer_v1.shap_values(df_input)[0]
+        shap_dict  = {
             feat: round(float(val), 3)
             for feat, val in zip(features_v1, shap_vals)
         }
         shap_sorted = dict(sorted(
             shap_dict.items(),
-            key=lambda x: abs(x[1]),
-            reverse=True
-        ))
+            key=lambda x: abs(x[1]), reverse=True))
 
         return jsonify({
-            'probability': round(prob, 4),
+            'probability':     round(prob, 4),
             'probability_pct': round(prob * 100, 1),
-            'prediction': prediction,
-            'risk_level': 'high' if prob >= 0.65 else 'medium' if prob >= 0.35 else 'low',
-            'shap_values': shap_sorted,
-            'input_features': input_data
+            'prediction':      prediction,
+            'risk_level':      'high' if prob >= 0.65 else 'medium' if prob >= 0.35 else 'low',
+            'shap_values':     shap_sorted,
+            'input_features':  input_data
         })
 
     except Exception as e:
@@ -91,7 +103,6 @@ def predict_realtime():
 def predict_precalving():
     try:
         data = request.json
-
         input_data = {
             'parity_prior_lactation':              data.get('parity', 2),
             'n_scc_records_previous_lactation':    data.get('n_scc_records', 8),
@@ -125,32 +136,29 @@ def predict_precalving():
             'herd_predicted_305d_yield_l':         data.get('herd_305d_yield', 9000),
         }
 
-        df_input = pd.DataFrame([input_data])
-
-        prob = float(model_v1b.predict_proba(df_input)[0][1])
+        df_input   = pd.DataFrame([input_data])
+        prob       = float(model_v1b.predict_proba(df_input)[0][1])
         prediction = int(model_v1b.predict(df_input)[0])
-
-        shap_vals = explainer_v1b.shap_values(df_input)[0]
-        shap_dict = {
+        shap_vals  = explainer_v1b.shap_values(df_input)[0]
+        shap_dict  = {
             feat: round(float(val), 3)
             for feat, val in zip(input_data.keys(), shap_vals)
         }
         shap_sorted = dict(sorted(
             shap_dict.items(),
-            key=lambda x: abs(x[1]),
-            reverse=True
-        )[:10])
+            key=lambda x: abs(x[1]), reverse=True)[:10])
 
         return jsonify({
-            'probability': round(prob, 4),
+            'probability':     round(prob, 4),
             'probability_pct': round(prob * 100, 1),
-            'prediction': prediction,
-            'risk_level': 'high' if prob >= 0.65 else 'medium' if prob >= 0.35 else 'low',
-            'shap_values': shap_sorted,
+            'prediction':      prediction,
+            'risk_level':      'high' if prob >= 0.65 else 'medium' if prob >= 0.35 else 'low',
+            'shap_values':     shap_sorted,
         })
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
