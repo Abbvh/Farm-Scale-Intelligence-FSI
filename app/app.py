@@ -158,6 +158,34 @@ def predict_precalving():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+# ============================================
+# FSI v1.0 — Simulator Routes
+# ============================================
+
+from simulator import simulation_state, run_cycle
+import threading
+
+# Run simulator in background thread
+def simulator_thread():
+    import time
+    while True:
+        try:
+            run_cycle()
+        except Exception as e:
+            print(f"Simulator error: {e}")
+        time.sleep(5)
+
+sim_thread = threading.Thread(target=simulator_thread, daemon=True)
+sim_thread.start()
+print("Farm simulator started in background")
+
+@app.route('/live')
+def live():
+    return render_template('live.html')
+
+@app.route('/simulation_state')
+def get_simulation_state():
+    return jsonify(simulation_state)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
