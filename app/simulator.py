@@ -12,7 +12,9 @@ import json
 import random
 from datetime import datetime
 
-FSI_URL = "http://127.0.0.1:5000"
+import os
+PORT = int(os.environ.get('PORT', 5000))
+FSI_URL = f"http://127.0.0.1:{PORT}"
 
 np.random.seed(42)
 
