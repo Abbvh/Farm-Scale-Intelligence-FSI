@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FSI — Live Farm Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal:#0A9396;--teal-dark:#005F73;--teal-light:#94D2BD;
+  --amber:#EE9B00;--coral:#AE2012;--green:#2DC653;
+  --navy:#001219;--bg:#030E12;--surface:#071820;
+  --surface2:#0C2330;--border:rgba(10,147,150,0.2);
+  --text:#E9F5F5;--text2:#94D2BD;--text3:#4A7F80;
+  --font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(10,147,150,0.04) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(10,147,150,0.04) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0}
+
+.header{position:sticky;top:0;z-index:100;background:rgba(3,14,18,0.95);
+  backdrop-filter:blur(20px);border-bottom:1px solid var(--border);
+  padding:0 28px;display:flex;align-items:center;gap:16px;height:64px}
+.logo-mark{width:38px;height:38px;background:linear-gradient(135deg,var(--teal-dark),var(--teal));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-title{font-size:16px;font-weight:600}
+.logo-title span{color:var(--teal)}
+.logo-sub{font-size:11px;color:var(--text3)}
+.header-right{margin-left:auto;display:flex;gap:12px;align-items:center}
+.pill{font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;border:1px solid}
+.pill-teal{border-color:var(--teal);color:var(--teal);background:rgba(10,147,150,0.1)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 8px var(--green);animation:pulse 1.8s ease-in-out infinite}
+.live-text{font-size:12px;color:var(--green);font-weight:500}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(1.4)}}
+
+.nav-link{font-size:13px;color:var(--text3);text-decoration:none;
+  padding:6px 14px;border-radius:8px;border:1px solid var(--border);transition:all 0.2s}
+.nav-link:hover{color:var(--teal);border-color:var(--teal)}
+
+.main{position:relative;z-index:1;padding:24px;
+  display:grid;grid-template-columns:1fr 340px;gap:20px}
+
+.section-label{font-size:10px;font-weight:600;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--text3);margin-bottom:14px;
+  display:flex;align-items:center;gap:10px}
+.section-label::after{content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,var(--border),transparent)}
+
+/* Stats row */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:16px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card.s1::before{background:var(--green)}
+.stat-card.s2::before{background:var(--amber)}
+.stat-card.s3::before{background:var(--coral)}
+.stat-card.s4::before{background:var(--teal)}
+.stat-val{font-size:28px;font-weight:700;font-family:var(--mono)}
+.stat-lbl{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* Herd grid */
+.herd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.cow-card{background:var(--surface);border:1px solid;
+  border-radius:12px;padding:14px;transition:all 0.4s;cursor:pointer}
+.cow-card:hover{transform:translateY(-2px)}
+.cow-card.risk-low{border-color:rgba(45,198,83,0.3)}
+.cow-card.risk-medium{border-color:rgba(238,155,0,0.5);background:rgba(238,155,0,0.05)}
+.cow-card.risk-high{border-color:rgba(174,32,18,0.7);background:rgba(174,32,18,0.08);
+  animation:glow-red 2s ease-in-out infinite}
+@keyframes glow-red{0%,100%{box-shadow:0 0 8px rgba(174,32,18,0.3)}
+  50%{box-shadow:0 0 20px rgba(174,32,18,0.6)}}
+
+.cow-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.cow-id{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)}
+.cow-icon{font-size:16px}
+.cow-prob{font-family:var(--mono);font-size:20px;font-weight:700}
+.cow-status{font-size:10px;color:var(--text3);margin-top:2px}
+.cow-bar{width:100%;height:3px;background:rgba(255,255,255,0.06);
+  border-radius:2px;margin-top:8px;overflow:hidden}
+.cow-bar-fill{height:100%;border-radius:2px;transition:width 0.6s ease}
+
+/* Alerts panel */
+.alerts-panel{background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:20px;height:fit-content}
+.alert-item{background:rgba(174,32,18,0.08);border:1px solid rgba(174,32,18,0.3);
+  border-left:3px solid var(--coral);border-radius:8px;
+  padding:10px 12px;margin-bottom:10px}
+.alert-item:last-child{margin-bottom:0}
+.alert-cow{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--coral)}
+.alert-time{font-size:10px;color:var(--text3);margin-top:2px}
+.alert-msg{font-size:12px;color:var(--text2);margin-top:4px}
+.no-alerts{text-align:center;color:var(--text3);font-size:13px;
+  padding:30px 0}
+
+/* Selected cow detail */
+.cow-detail{background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:20px;margin-bottom:16px}
+.detail-title{font-size:16px;font-weight:600;margin-bottom:14px}
+.detail-row{display:flex;justify-content:space-between;
+  padding:8px 0;border-bottom:1px solid var(--border2)}
+.detail-row:last-child{border-bottom:none}
+.detail-label{font-size:12px;color:var(--text3)}
+.detail-value{font-family:var(--mono);font-size:12px;font-weight:600}
+
+/* Update indicator */
+.update-bar{background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:10px 16px;margin-bottom:20px;
+  display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text3)}
+.update-progress{flex:1;height:3px;background:rgba(255,255,255,0.06);
+  border-radius:2px;overflow:hidden}
+.update-fill{height:100%;background:var(--teal);border-radius:2px;
+  transition:width 0.1s linear}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo-mark">🌿</div>
+  <div>
+    <div class="logo-title">Farm Scale <span>Intelligence</span></div>
+    <div class="logo-sub">Live farm monitoring — real XGBoost predictions</div>
+  </div>
+  <div class="header-right">
+    <span class="pill pill-teal">FSI v1.0</span>
+    <div class="live-dot"></div>
+    <span class="live-text">LIVE</span>
+    <a href="/" class="nav-link">← Back to FSI</a>
+  </div>
+</header>
+
+<div style="position:relative;z-index:1;padding:20px 24px 0">
+  <div class="stats-row">
+    <div class="stat-card s1">
+      <div class="stat-val" id="stat-healthy">—</div>
+      <div class="stat-lbl">Healthy cows</div>
+    </div>
+    <div class="stat-card s2">
+      <div class="stat-val" id="stat-watch">—</div>
+      <div class="stat-lbl">Under watch</div>
+    </div>
+    <div class="stat-card s3">
+      <div class="stat-val" id="stat-alert">—</div>
+      <div class="stat-lbl">Active alerts</div>
+    </div>
+    <div class="stat-card s4">
+      <div class="stat-val" id="stat-cycle">—</div>
+      <div class="stat-lbl">Milking sessions</div>
+    </div>
+  </div>
+
+  <div class="update-bar">
+    <span>Next milking session in <span id="countdown">5</span>s</span>
+    <div class="update-progress">
+      <div class="update-fill" id="update-fill" style="width:100%"></div>
+    </div>
+    <span id="farm-time" style="color:var(--teal);font-weight:500">—</span>
+<span id="last-update" style="margin-left:12px">—</span>
+  </div>
+</div>
+
+<div class="main">
+  <div>
+    <div class="section-label">Herd monitor — 20 cows</div>
+<div style="font-size:11px;color:var(--amber);margin-bottom:12px;padding:8px 12px;
+  background:rgba(238,155,0,0.08);border:1px solid rgba(238,155,0,0.2);border-radius:8px">
+  ⏱ <strong>Demo mode</strong> — each cycle = 1 milking session (8 farm hours). 
+  Disease develops over 3-5 days. Real deployment: updates 2-3× daily per milking.
+</div>
+    <div class="herd-grid" id="herd-grid">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="cow-detail" id="cow-detail" style="display:none">
+      <div class="detail-title" id="detail-title">COW-001 — Details</div>
+      <div id="detail-rows"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="alerts-panel">
+      <div class="section-label">Alert log</div>
+      <div id="alerts-container">
+        <div class="no-alerts">🟢 No alerts yet — herd is healthy</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedCow = null;
+let countdown = 5;
+let fillInterval = null;
+
+function getRiskColor(risk) {
+  if (risk === 'high')   return '#AE2012';
+  if (risk === 'medium') return '#EE9B00';
+  return '#2DC653';
+}
+
+function getRiskIcon(risk) {
+  if (risk === 'high')   return '🚨';
+  if (risk === 'medium') return '⚠️';
+  return '✅';
+}
+
+function updateDashboard(state) {
+  const cows = Object.values(state.cows);
+  
+  // Stats
+  const healthy = cows.filter(c => c.risk_level === 'low').length;
+  const watch   = cows.filter(c => c.risk_level === 'medium').length;
+  const alerts  = cows.filter(c => c.risk_level === 'high').length;
+  
+  document.getElementById('stat-healthy').textContent = healthy;
+  document.getElementById('stat-watch').textContent   = watch;
+  document.getElementById('stat-alert').textContent   = alerts;
+  document.getElementById('stat-cycle').textContent   = state.cycle || 0;
+  document.getElementById('last-update').textContent  = 'Updated: ' + (state.last_update || '—');
+  
+const farmTimeEl = document.getElementById('farm-time');
+if (farmTimeEl) farmTimeEl.textContent = '🐄 ' + (state.farm_time || '—');
+
+  // Herd grid
+  const grid = document.getElementById('herd-grid');
+  grid.innerHTML = cows.map(cow => {
+    const color = getRiskColor(cow.risk_level);
+    const icon  = getRiskIcon(cow.risk_level);
+    const prob  = cow.probability || 0;
+    return `<div class="cow-card risk-${cow.risk_level}" onclick="selectCow('${cow.cow_id}')">
+      <div class="cow-header">
+        <span class="cow-id">${cow.cow_id}</span>
+        <span class="cow-icon">${icon}</span>
+      </div>
+      <div class="cow-prob" style="color:${color}">${prob}%</div>
+      <div class="cow-status">${cow.risk_level === 'high' ? 'ALERT — act now' : cow.risk_level === 'medium' ? 'Monitor closely' : 'All signals normal'}</div>
+      <div class="cow-bar">
+        <div class="cow-bar-fill" style="width:${prob}%;background:${color}"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Alerts
+  const alertsEl = document.getElementById('alerts-container');
+  if (state.alerts && state.alerts.length > 0) {
+    alertsEl.innerHTML = state.alerts.map(a => `
+      <div class="alert-item">
+        <div class="alert-cow">🚨 ${a.cow_id}</div>
+        <div class="alert-time">${a.time}</div>
+        <div class="alert-msg">${a.message}</div>
+      </div>`).join('');
+  } else {
+    alertsEl.innerHTML = '<div class="no-alerts">🟢 No alerts yet — herd is healthy</div>';
+  }
+
+  // Update selected cow detail if any
+  if (selectedCow && state.cows[selectedCow]) {
+    showCowDetail(state.cows[selectedCow]);
+  }
+}
+
+function selectCow(cowId) {
+  selectedCow = cowId;
+}
+
+function showCowDetail(cow) {
+  const detail = document.getElementById('cow-detail');
+  detail.style.display = 'block';
+  document.getElementById('detail-title').textContent = 
+    `${cow.cow_id} — ${cow.risk_level.toUpperCase()} RISK (${cow.probability}%)`;
+  
+  const r = cow.readings || {};
+  const rows = [
+    ['Body temperature', (r.body_temp || 0).toFixed(1) + '°C'],
+    ['Milk yield',       (r.milk_yield_kg || 0).toFixed(1) + ' kg'],
+    ['Electrical cond.', (r.electrical_conductivity || 0).toFixed(2) + ' mS/cm'],
+    ['Activity steps',   (r.activity_steps || 0).toLocaleString()],
+    ['Rumination time',  (r.rumination_time || 0) + ' min'],
+    ['Milk fat %',       (r.milk_fat_pct || 0).toFixed(1) + '%'],
+    ['Milk protein %',   (r.milk_protein_pct || 0).toFixed(1) + '%'],
+  ];
+
+  document.getElementById('detail-rows').innerHTML = rows.map(([label, val]) => `
+    <div class="detail-row">
+      <span class="detail-label">${label}</span>
+      <span class="detail-value">${val}</span>
+    </div>`).join('');
+}
+
+function startCountdown() {
+  countdown = 5;
+  clearInterval(fillInterval);
+  
+  fillInterval = setInterval(() => {
+    countdown -= 0.1;
+    const pct = (countdown / 5) * 100;
+    document.getElementById('update-fill').style.width = Math.max(0, pct) + '%';
+    document.getElementById('countdown').textContent = Math.max(0, Math.ceil(countdown));
+    if (countdown <= 0) clearInterval(fillInterval);
+  }, 100);
+}
+
+async function fetchState() {
+  try {
+    const res  = await fetch('/simulation_state');
+    const data = await res.json();
+    updateDashboard(data);
+  } catch(e) {
+    console.error('Failed to fetch state:', e);
+  }
+  startCountdown();
+}
+
+// Initial fetch then every 5 seconds
+fetchState();
+setInterval(fetchState, 5000);
+</script>
+</body>
+</html>
